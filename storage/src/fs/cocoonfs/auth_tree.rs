@@ -3789,8 +3789,8 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip, DUI: AuthTreeDataBlocksUpdatesI
                             // range. Record its digest in the
                             // corresponding leaf node, potentially after
                             // moving the cursor all the way down to level 0.
-                            if this.cursor.len() != tree_config.auth_tree_levels as usize {
-                                if let Err(e) = this.push_cursor_to_leaf(
+                            if this.cursor.len() != tree_config.auth_tree_levels as usize
+                                && let Err(e) = this.push_cursor_to_leaf(
                                     next_updated_data_block_in_range.data_block_index,
                                     tree_config.node_digests_per_node_log2,
                                     tree_config.data_digests_per_node_log2,
@@ -3798,7 +3798,6 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip, DUI: AuthTreeDataBlocksUpdatesI
                                 ) {
                                     break 'outer Err((e, Some(next_updated_data_block_in_range)));
                                 }
-                            }
                             if let Err((e, returned_data_block_digest)) = this.pending_bottom_node_updates_push(
                                 next_updated_data_block_in_range.data_block_index,
                                 mem::take(&mut next_updated_data_block_in_range.data_block_digest),
@@ -4032,8 +4031,8 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip, DUI: AuthTreeDataBlocksUpdatesI
                     return task::Poll::Ready(Err(e));
                 }
 
-                if let Some(mut next_updated_data_block) = next_updated_data_block {
-                    if data_block_updates_iter
+                if let Some(mut next_updated_data_block) = next_updated_data_block
+                    && data_block_updates_iter
                         .return_digest_on_error(
                             fs_config,
                             PhysicalAuthTreeDataBlockUpdate {
@@ -4046,7 +4045,6 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip, DUI: AuthTreeDataBlocksUpdatesI
                     {
                         return task::Poll::Ready(Err(e));
                     }
-                }
 
                 task::Poll::Ready(Ok((data_block_updates_iter, Err(e))))
             }
@@ -6711,11 +6709,9 @@ impl<C: chip::NvChip> AuthTreeReplayJournalUpdateScriptCursorAdvanceFuture<C> {
                             } else {
                                 if cursor.cur_data_allocation_block_index
                                     >= cursor.cur_contiguous_data_allocation_blocks_range_end
-                                {
-                                    if let Err(e) = cursor.update_physical_position(tree_config) {
+                                    && let Err(e) = cursor.update_physical_position(tree_config) {
                                         break Err(e);
                                     }
-                                }
                                 debug_assert!(
                                     cursor.cur_physical_allocation_block_index
                                         < journal_update_script_entry_range.end()
@@ -7272,11 +7268,9 @@ impl<C: chip::NvChip> AuthTreeReplayJournalUpdateScriptCursorReconstructLeafDige
                     }
 
                     if cursor.cur_data_allocation_block_index >= cursor.cur_contiguous_data_allocation_blocks_range_end
-                    {
-                        if let Err(e) = cursor.update_physical_position(tree_config) {
+                        && let Err(e) = cursor.update_physical_position(tree_config) {
                             break Err(e);
                         }
-                    }
 
                     let empty_pending_allocs = SparseAllocBitmapUnion::new(&[]);
                     let empty_pending_frees = SparseAllocBitmapUnion::new(&[]);

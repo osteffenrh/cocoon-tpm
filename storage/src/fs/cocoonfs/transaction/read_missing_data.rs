@@ -1059,8 +1059,8 @@ impl<C: chip::NvChip> TransactionReadMissingDataFuture<C> {
         } = completed_read_request;
 
         // If read from the Journal and disguising is enabled, undisguise first.
-        if !read_from_target {
-            if let Some(journal_data_copy_disguise) = transaction.journal_staging_copy_disguise.as_mut() {
+        if !read_from_target
+            && let Some(journal_data_copy_disguise) = transaction.journal_staging_copy_disguise.as_mut() {
                 let journal_data_copy_undisguise = match journal_data_copy_disguise.1.as_ref() {
                     Some(journal_data_copy_undisguise) => journal_data_copy_undisguise,
                     None => journal_data_copy_disguise.1.insert(
@@ -1093,7 +1093,6 @@ impl<C: chip::NvChip> TransactionReadMissingDataFuture<C> {
                     }
                 }
             }
-        }
 
         // Now install the read Allocation Block buffers at their final location within
         // the states.

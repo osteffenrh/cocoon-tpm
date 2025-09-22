@@ -213,15 +213,13 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> CocoonFsSyncStateReadFuture<ST,
                         let cur_journal_block_alloc_bitmap = alloc_bitmap_journal_blocks_iter.next().unwrap_or(0);
                         if let Some((next_journal_block_pending_alloc_bitmap_covered_allocation_blocks_begin, _)) =
                             next_journal_block_pending_alloc_bitmap.as_ref()
-                        {
-                            if *next_journal_block_pending_alloc_bitmap_covered_allocation_blocks_begin
+                            && *next_journal_block_pending_alloc_bitmap_covered_allocation_blocks_begin
                                 < cur_journal_block_target_allocation_blocks_begin
                             {
                                 pending_allocs_journal_blocks_iter
                                     .skip_to(cur_journal_block_target_allocation_blocks_begin);
                                 next_journal_block_pending_alloc_bitmap = pending_allocs_journal_blocks_iter.next();
                             }
-                        }
                         let cur_journal_block_all_uninitialized = cur_journal_block_alloc_bitmap == 0;
                         if cur_journal_block_all_uninitialized
                             && (transaction.is_primary_pending

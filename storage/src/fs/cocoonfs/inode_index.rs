@@ -2411,11 +2411,10 @@ impl InodeIndexTreeNodeCache {
         node_level: Option<u32>,
     ) -> Option<Result<InodeIndexTreeNodeCacheIndex, InodeIndexTreeNodeCacheIndex>> {
         // Only the two topmost levels' nodes are getting cached.
-        if let Some(node_level) = node_level {
-            if node_level >= self.index_tree_levels || node_level + 2 < self.index_tree_levels {
+        if let Some(node_level) = node_level
+            && (node_level >= self.index_tree_levels || node_level + 2 < self.index_tree_levels) {
                 return None;
             }
-        }
 
         Some(self._lookup_entry_index(node_allocation_blocks_begin))
     }
@@ -3517,8 +3516,8 @@ impl<C: chip::NvChip> InodeIndexReadTreeNodeFuture<C> {
                             .iter()
                             .enumerate()
                         {
-                            if let Some(entry) = nodes_staged_updates_slot.as_ref() {
-                                if entry.node.node_allocation_blocks_begin() == node_allocation_blocks_begin {
+                            if let Some(entry) = nodes_staged_updates_slot.as_ref()
+                                && entry.node.node_allocation_blocks_begin() == node_allocation_blocks_begin {
                                     // Check that the node level matches expectations.
                                     if expected_node_level
                                         .map(|expected_node_level| entry.node_level != expected_node_level)
@@ -3538,7 +3537,6 @@ impl<C: chip::NvChip> InodeIndexReadTreeNodeFuture<C> {
                                         }),
                                     ));
                                 }
-                            }
                         }
 
                         // Otherwise, if the node is among the supplied transaction's cached updated
@@ -5483,10 +5481,9 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> CocoonFsSyncStateReadFuture<ST,
                             // If no entry will have to get inserted, or there's enough room in the
                             // node, then the parent will not be needed. Don't carry it around then,
                             // dismiss it from here and possibly move into a cache as appropriate.
-                            if preexisting_entry_extent_ptr.is_some()
-                                || leaf_node_entries < tree_layout.max_leaf_node_entries
-                            {
-                                if let Some(InodeIndexTreeNodeRefForUpdate::Owned {
+                            if (preexisting_entry_extent_ptr.is_some()
+                                || leaf_node_entries < tree_layout.max_leaf_node_entries)
+                                && let Some(InodeIndexTreeNodeRefForUpdate::Owned {
                                     node: parent_node,
                                     is_modified_by_transaction: parent_node_is_modified_by_transaction,
                                 }) = this.found_leaf_parent_node.take()
@@ -5502,7 +5499,6 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> CocoonFsSyncStateReadFuture<ST,
                                         tree_nodes_cache_guard.insert(1, parent_node);
                                     }
                                 }
-                            }
 
                             // Done, return the result.
                             this.fut_state = InodeIndexLookupForInsertFutureState::Done;
@@ -5712,8 +5708,7 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> CocoonFsSyncStateReadFuture<ST,
 
                     if let Some(lookup_result_preexisting_extent_ptr) =
                         this.lookup_result.preexisting_entry_extent_ptr.as_ref()
-                    {
-                        if *lookup_result_preexisting_extent_ptr
+                        && *lookup_result_preexisting_extent_ptr
                             == this
                                 .pending_inode_extents_list_update
                                 .get_inode_index_entry_extent_ptr()
@@ -5751,7 +5746,6 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> CocoonFsSyncStateReadFuture<ST,
 
                             break (Some(transaction), Ok(()));
                         }
-                    }
 
                     // Stage the previously found and loaded leaf node for an update.
                     let lookup_result_leaf_node = mem::replace(
@@ -9234,8 +9228,8 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> CocoonFsSyncStateReadFuture<ST,
                         ) {
                             break (Some(cursor), Some(transaction), e);
                         }
-                        if let Some(inode_extents_list_extents) = inode_extents.inode_extents_list_extents.as_ref() {
-                            if let Err(e) = transaction::Transaction::free_extents(
+                        if let Some(inode_extents_list_extents) = inode_extents.inode_extents_list_extents.as_ref()
+                            && let Err(e) = transaction::Transaction::free_extents(
                                 &mut transaction.allocs,
                                 &mut transaction.auth_tree_data_blocks_update_states,
                                 inode_extents_list_extents.iter(),
@@ -9250,7 +9244,6 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> CocoonFsSyncStateReadFuture<ST,
                                 };
                                 break (Some(cursor), Some(transaction), e);
                             }
-                        }
                         if let Err(e) =
                             staged_update_leaf_node.remove(tree_position.entry_index_in_leaf_node, tree_layout)
                         {
@@ -10051,8 +10044,7 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> CocoonFsSyncStateReadFuture<ST,
                                 break (Some(cursor), Some(transaction), e);
                             }
                             if let Some(inode_extents_list_extents) = inode_extents.inode_extents_list_extents.as_ref()
-                            {
-                                if let Err(e) = transaction::Transaction::free_extents(
+                                && let Err(e) = transaction::Transaction::free_extents(
                                     &mut transaction.allocs,
                                     &mut transaction.auth_tree_data_blocks_update_states,
                                     inode_extents_list_extents.iter(),
@@ -10067,7 +10059,6 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> CocoonFsSyncStateReadFuture<ST,
                                     };
                                     break (Some(cursor), Some(transaction), e);
                                 }
-                            }
 
                             let rollback_inode_extents_deallocation = |mut transaction: Box<
                                 transaction::Transaction,

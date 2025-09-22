@@ -687,8 +687,8 @@ impl<C: chip::NvChip> JournalReadMutableImageHeaderFuture<C> {
 
                     // If the part had been read from the Journal Staging Copy and disguising is
                     // enabled, undisguise.
-                    if let Some(journal_staging_copy_undisguise) = journal_staging_copy_undisguise {
-                        if this.apply_writes_script_index < apply_writes_script.len()
+                    if let Some(journal_staging_copy_undisguise) = journal_staging_copy_undisguise
+                        && this.apply_writes_script_index < apply_writes_script.len()
                             && apply_writes_script[this.apply_writes_script_index]
                                 .get_target_range()
                                 .begin()
@@ -736,7 +736,6 @@ impl<C: chip::NvChip> JournalReadMutableImageHeaderFuture<C> {
                                 }
                             }
                         }
-                    }
 
                     this.cur_target_allocation_block_index += *cur_read_range_allocation_blocks;
                     this.fut_state = JournalReadMutableImageHeaderFutureState::PrepareReadPart;

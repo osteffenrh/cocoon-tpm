@@ -897,8 +897,7 @@ impl InodeExtentsPendingReallocation {
             excess_preexisting_inode_extents,
             freed,
         } = self
-        {
-            if !*freed {
+            && !*freed {
                 match transaction::Transaction::free_extents(
                     transaction_allocs,
                     transaction_updates_states,
@@ -908,7 +907,6 @@ impl InodeExtentsPendingReallocation {
                     Err(e) => return Err(e),
                 };
             };
-        }
         Ok(())
     }
 
@@ -931,14 +929,12 @@ impl InodeExtentsPendingReallocation {
             excess_preexisting_inode_extents,
             freed,
         } = self
-        {
-            if *freed {
+            && *freed {
                 *freed = false;
                 // The retained extents might have been gotten written to, so mark the truncated
                 // ones as being in an indeterminate state now.
                 return transaction.rollback_extents_free(excess_preexisting_inode_extents.iter(), alloc_bitmap, true);
             }
-        }
         Ok(transaction)
     }
 

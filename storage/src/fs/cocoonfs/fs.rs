@@ -396,8 +396,8 @@ impl CocoonFsPendingTransactionsSyncState {
                 if journal_block_alloc_bitmap_word == 0 {
                     found_region_allocation_blocks_end = extent.end();
                 }
-                if found_region_allocation_blocks_begin < found_region_allocation_blocks_end {
-                    if let Err(e) = self.pending_allocs.add_extent(&layout::PhysicalAllocBlockRange::new(
+                if found_region_allocation_blocks_begin < found_region_allocation_blocks_end
+                    && let Err(e) = self.pending_allocs.add_extent(&layout::PhysicalAllocBlockRange::new(
                         found_region_allocation_blocks_begin,
                         found_region_allocation_blocks_end,
                     )) {
@@ -409,7 +409,6 @@ impl CocoonFsPendingTransactionsSyncState {
                         self.pending_allocs.reset_remove_rollback();
                         return Err(e);
                     }
-                }
 
                 if aligned_remaining_extent_allocation_blocks_begin >= extent.end() {
                     break;
@@ -2553,8 +2552,8 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> asynchronous::BroadcastedFuture
                                 }
                             };
 
-                            if let Some(pre_commit_validate_cb) = pre_commit_validate_cb.take() {
-                                if let Err(e) = pre_commit_validate_cb() {
+                            if let Some(pre_commit_validate_cb) = pre_commit_validate_cb.take()
+                                && let Err(e) = pre_commit_validate_cb() {
                                     *this = Self::CleanupOnPreCommitError {
                                         // Will receive the
                                         // CocoonFsSyncStateMemberWriteGuard::into_weak() upon
@@ -2567,7 +2566,6 @@ impl<ST: sync_types::SyncTypes, C: chip::NvChip> asynchronous::BroadcastedFuture
                                     };
                                     continue;
                                 }
-                            }
 
                             drop(fs_sync_state_rwlock);
 

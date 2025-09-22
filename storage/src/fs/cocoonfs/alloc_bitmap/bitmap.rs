@@ -1938,11 +1938,10 @@ impl AllocBitmap {
                             .filter(|e| u64::from(e.end()) >> BITMAP_WORD_BITS_LOG2 > bitmap_word_index)
                             .min_by_key(|e| e.end())
                     });
-                if let Some(next_allocated_fullword_chunk) = next_allocated_fullword_chunk {
-                    if u64::from(next_allocated_fullword_chunk.begin()) >> BITMAP_WORD_BITS_LOG2 <= bitmap_word_index {
+                if let Some(next_allocated_fullword_chunk) = next_allocated_fullword_chunk
+                    && u64::from(next_allocated_fullword_chunk.begin()) >> BITMAP_WORD_BITS_LOG2 <= bitmap_word_index {
                         continue;
                     }
-                }
 
                 return Some(layout::PhysicalAllocBlockIndex::from(
                     bitmap_word_index * (BitmapWord::BITS as u64),
@@ -2687,8 +2686,8 @@ impl AllocBitmap {
                 }
                 previous_bitmap_word = Some(0);
                 continue;
-            } else if bitmap_word & subword_rem_free_head_word_mask == 0 {
-                if let Some(0) = previous_bitmap_word {
+            } else if bitmap_word & subword_rem_free_head_word_mask == 0
+                && let Some(0) = previous_bitmap_word {
                     if !optimize_placement {
                         // Found something and no placement optimization requested, bail out.
                         return Some(layout::PhysicalAllocBlockIndex::from(
@@ -2719,7 +2718,6 @@ impl AllocBitmap {
                         }
                     }
                 }
-            }
 
             if bitmap_word & subword_rem_free_tail_word_mask == 0 {
                 previous_bitmap_word = Some(bitmap_word);
@@ -3195,11 +3193,10 @@ impl AllocBitmap {
                 // the current extent, then swap the latter into the first position.
                 if extents_hdr_transferred {
                     extents.swap_extents(0, cur_extent_index);
-                    if let Some((shortest_extent_index, shortest_extent_allocation_blocks)) = shortest_extent {
-                        if shortest_extent_index == 0 {
+                    if let Some((shortest_extent_index, shortest_extent_allocation_blocks)) = shortest_extent
+                        && shortest_extent_index == 0 {
                             shortest_extent = Some((cur_extent_index, shortest_extent_allocation_blocks));
                         }
-                    }
                     cur_extent_index = 0;
                 }
 
@@ -3884,18 +3881,16 @@ impl<'a, const AN: usize, const FN: usize> Iterator for AllocBitmapWordIterator<
         self.next_bitmap_word_index += 1;
         let mut bitmap_word = self.bitmap.bitmap[bitmap_word_index as usize];
 
-        if let Some(pending_alloc) = &self.next_pending_alloc {
-            if pending_alloc.0 == bitmap_word_index {
+        if let Some(pending_alloc) = &self.next_pending_alloc
+            && pending_alloc.0 == bitmap_word_index {
                 bitmap_word |= pending_alloc.1;
                 self.next_pending_alloc = self.pending_allocs_iter.next();
             }
-        }
-        if let Some(pending_free) = &self.next_pending_free {
-            if pending_free.0 == bitmap_word_index {
+        if let Some(pending_free) = &self.next_pending_free
+            && pending_free.0 == bitmap_word_index {
                 bitmap_word &= !pending_free.1;
                 self.next_pending_free = self.pending_frees_iter.next();
             }
-        }
 
         Some((bitmap_word_index, bitmap_word))
     }

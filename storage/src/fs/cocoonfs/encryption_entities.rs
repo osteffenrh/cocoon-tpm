@@ -1555,13 +1555,12 @@ impl EncryptedChainedExtentsDecryptionInstance {
 
         match layout.inline_authentication_hmac_hash_alg.as_ref() {
             Some(inline_authentication_hmac_hash_alg) => {
-                if let Some(inline_authentication_hmac_instance) = inline_authentication_hmac_instance.as_ref() {
-                    if inline_authentication_hmac_hash_alg.hmac_hash_alg
+                if let Some(inline_authentication_hmac_instance) = inline_authentication_hmac_instance.as_ref()
+                    && inline_authentication_hmac_hash_alg.hmac_hash_alg
                         != tpm2_interface::TpmiAlgHash::from(inline_authentication_hmac_instance)
                     {
                         return Err(nvfs_err_internal!());
                     }
-                }
             }
             None => {
                 // Inline authentication not specifed for the layout, yet an instance has been

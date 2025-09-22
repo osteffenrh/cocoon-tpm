@@ -451,8 +451,8 @@ impl AllocBitmapFile {
                 } else {
                     0
                 };
-                if let Some(next_free) = next_transaction_free.as_ref() {
-                    if u64::from(next_free.0) >> BITMAP_WORD_BITS_LOG2 == cur_bitmap_word_index {
+                if let Some(next_free) = next_transaction_free.as_ref()
+                    && u64::from(next_free.0) >> BITMAP_WORD_BITS_LOG2 == cur_bitmap_word_index {
                         if next_free.1 & cur_bitmap_word_new_allocs != 0 {
                             // There's some Allocation Block which is getting both allocated and freed
                             // by the transaction.
@@ -461,7 +461,6 @@ impl AllocBitmapFile {
                         updated_bitmap_word &= !next_free.1;
                         next_transaction_free = transaction_frees_iter.next();
                     }
-                }
 
                 let cur_bitmap_word_begin_in_file_block_buf =
                     file_block_bitmap_word_index as usize * mem::size_of::<BitmapWord>();

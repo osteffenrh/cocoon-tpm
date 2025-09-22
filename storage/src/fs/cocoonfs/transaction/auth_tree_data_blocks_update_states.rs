@@ -2445,11 +2445,9 @@ impl AuthTreeDataBlocksUpdateStates {
         {
             if let AllocationBlockUpdateStagedUpdate::Update { encrypted_data } =
                 &allocation_block_update_state.staged_update
-            {
-                if !encrypted_data.is_empty() {
+                && !encrypted_data.is_empty() {
                     continue;
                 }
-            }
             let allocation_block_size = 1usize << (allocation_block_size_128b_log2 + 7);
             let encrypted_data = FixedVec::new_with_default(allocation_block_size)?;
             allocation_block_update_state.staged_update = AllocationBlockUpdateStagedUpdate::Update { encrypted_data }

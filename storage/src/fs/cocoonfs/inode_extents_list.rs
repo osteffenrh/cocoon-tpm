@@ -1823,8 +1823,7 @@ impl InodeExtentsListExtentsPendingReallocation {
             excess_preexisting_inode_extents_list_extents,
             freed,
         } = self
-        {
-            if !*freed {
+            && !*freed {
                 match transaction::Transaction::free_extents(
                     transaction_allocs,
                     transaction_updates_states,
@@ -1834,7 +1833,6 @@ impl InodeExtentsListExtentsPendingReallocation {
                     Err(e) => return Err(e),
                 };
             };
-        }
         Ok(())
     }
 
@@ -1862,8 +1860,7 @@ impl InodeExtentsListExtentsPendingReallocation {
             excess_preexisting_inode_extents_list_extents,
             freed,
         } = self
-        {
-            if *freed {
+            && *freed {
                 *freed = false;
                 return transaction.rollback_extents_free(
                     excess_preexisting_inode_extents_list_extents.iter(),
@@ -1871,7 +1868,6 @@ impl InodeExtentsListExtentsPendingReallocation {
                     false,
                 );
             }
-        }
         Ok(transaction)
     }
 

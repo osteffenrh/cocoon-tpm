@@ -1609,8 +1609,7 @@ impl<C: chip::NvChip> BufferedReadAuthenticateDataFuture<C> {
                                 // read buffer, if any.
                                 if let Some(authenticated_subrange_from_read_buf) =
                                     this.d.authenticated_subrange_from_read_buf.as_ref()
-                                {
-                                    if this.d.authenticated_allocation_blocks_end
+                                    && this.d.authenticated_allocation_blocks_end
                                         == authenticated_subrange_from_read_buf.begin()
                                     {
                                         this.d.authenticated_allocation_blocks_end =
@@ -1639,7 +1638,6 @@ impl<C: chip::NvChip> BufferedReadAuthenticateDataFuture<C> {
                                         );
                                         *auth_tree_data_block_index += auth_tree::AuthTreeDataBlockCount::from(1);
                                     }
-                                }
 
                                 if this.d.authenticated_allocation_blocks_end >= this.d.request_range.end() {
                                     break;
