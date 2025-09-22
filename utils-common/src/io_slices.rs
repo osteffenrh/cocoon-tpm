@@ -1739,11 +1739,10 @@ impl<'a, 'b: 'a> DoubleEndedIoSlicesIter<'a> for SingletonIoSlice<'b> {
 
 impl<'a, 'b: 'a> WalkableIoSlicesIter<'a> for SingletonIoSlice<'b> {
     fn for_each(&self, cb: &mut dyn FnMut(&[u8]) -> bool) -> Result<(), Self::BackendIteratorError> {
-        if let Some(slice) = self.slice {
-            if !slice.is_empty() {
+        if let Some(slice) = self.slice
+            && !slice.is_empty() {
                 cb(slice);
             }
-        }
         Ok(())
     }
 }
@@ -1833,11 +1832,10 @@ impl<'a, 'b: 'a> DoubleEndedIoSlicesMutIter<'a> for SingletonIoSliceMut<'b> {
 
 impl<'a, 'b: 'a> WalkableIoSlicesIter<'a> for SingletonIoSliceMut<'b> {
     fn for_each(&self, cb: &mut dyn FnMut(&[u8]) -> bool) -> Result<(), Self::BackendIteratorError> {
-        if let Some(slice) = self.slice.as_deref() {
-            if !slice.is_empty() {
+        if let Some(slice) = self.slice.as_deref()
+            && !slice.is_empty() {
                 cb(slice);
             }
-        }
         Ok(())
     }
 }
