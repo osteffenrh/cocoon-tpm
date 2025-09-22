@@ -148,11 +148,10 @@ pub trait FixedBlockOutputKdf: Sized {
         block_buf: &mut [u8],
         mut block_buf_remaining_len: usize,
     ) -> Result<usize, CryptoError> {
-        if let Some(max_remaining_len) = self.max_remaining_len() {
-            if output.total_len()? > max_remaining_len + block_buf_remaining_len {
+        if let Some(max_remaining_len) = self.max_remaining_len()
+            && output.total_len()? > max_remaining_len + block_buf_remaining_len {
                 return Err(CryptoError::RequestTooBig);
             }
-        }
 
         block_buf_remaining_len -= output.copy_from_iter(
             &mut io_slices::SingletonIoSlice::new(&block_buf[block_buf.len() - block_buf_remaining_len..])
@@ -224,11 +223,10 @@ pub trait FixedBlockOutputKdf: Sized {
         block_buf: &mut [u8],
         mut block_buf_remaining_len: usize,
     ) -> Result<usize, CryptoError> {
-        if let Some(max_remaining_len) = self.max_remaining_len() {
-            if output.total_len()? > max_remaining_len + block_buf_remaining_len {
+        if let Some(max_remaining_len) = self.max_remaining_len()
+            && output.total_len()? > max_remaining_len + block_buf_remaining_len {
                 return Err(CryptoError::RequestTooBig);
             }
-        }
 
         block_buf_remaining_len -= output.xor_from_iter(
             &mut io_slices::SingletonIoSlice::new(&block_buf[block_buf.len() - block_buf_remaining_len..])

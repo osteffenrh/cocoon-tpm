@@ -176,8 +176,8 @@ impl HashDrbg {
             }
 
             // Step 2.)
-            if let Some(additional_input) = additional_input.as_mut() {
-                if !additional_input.is_empty().map_err(RngGenerateError::CryptoError)? {
+            if let Some(additional_input) = additional_input.as_mut()
+                && !additional_input.is_empty().map_err(RngGenerateError::CryptoError)? {
                     // Step 2.1.)
                     hash_instance
                         .update(
@@ -194,7 +194,6 @@ impl HashDrbg {
                     let w = cmpa::MpBigEndianUIntByteSlice::from_bytes(&digest_scratch_buf);
                     cmpa::ct_add_mp_mp(&mut v, &w);
                 }
-            }
 
             // Step 3.)
             Self::hashgen(&mut hash_instance, &mut output, &mut self.v, &mut digest_scratch_buf)
