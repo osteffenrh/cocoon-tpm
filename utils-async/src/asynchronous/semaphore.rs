@@ -829,14 +829,13 @@ impl<ST: sync_types::SyncTypes> AsyncSemaphoreState<ST> {
         let mut i = 0;
         while i < locked_queue.queue.len() {
             let entry = &locked_queue.queue[i];
-            if let AsyncSemaphoreLeaseGrantCount::Leases { count } = &entry.leases_requested {
-                if count.get() > locked_queue.max_leases {
+            if let AsyncSemaphoreLeaseGrantCount::Leases { count } = &entry.leases_requested
+                && count.get() > locked_queue.max_leases {
                     // The semaphore has been shrunken, skip over this
                     // failed, already woken request.
                     i += 1;
                     continue;
                 }
-            }
             let is_exclusive_all_waiter =
                 matches!(&entry.leases_requested, AsyncSemaphoreLeaseGrantCount::ExclusiveAll);
             if self.try_grant_one(locked_queue, &entry.leases_requested) {
@@ -1760,15 +1759,14 @@ impl<ST: sync_types::SyncTypes, T: marker::Send + marker::Sync, SP: sync_types::
     for AsyncSemaphoreLeasesWeakGuard<ST, T, SP>
 {
     fn drop(&mut self) {
-        if let Some(sem) = self.sem.take() {
-            if let Some(sem) = sem.upgrade() {
+        if let Some(sem) = self.sem.take()
+            && let Some(sem) = sem.upgrade() {
                 drop(AsyncSemaphoreLeasesGuard {
                     sem: Some(sem),
                     leases_granted: self.leases_granted,
                     _phantom: marker::PhantomData,
                 });
             }
-        }
     }
 }
 
@@ -2137,14 +2135,13 @@ impl<ST: sync_types::SyncTypes, T: marker::Send + marker::Sync, SP: sync_types::
     for AsyncSemaphoreExclusiveAllWeakGuard<ST, T, SP>
 {
     fn drop(&mut self) {
-        if let Some(sem) = self.sem.take() {
-            if let Some(sem) = sem.upgrade() {
+        if let Some(sem) = self.sem.take()
+            && let Some(sem) = sem.upgrade() {
                 drop(AsyncSemaphoreExclusiveAllGuard {
                     sem: Some(sem),
                     _phantom: marker::PhantomData,
                 });
             }
-        }
     }
 }
 
