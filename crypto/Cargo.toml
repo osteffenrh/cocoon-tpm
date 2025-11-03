@@ -121,4 +121,4 @@ cfb-mode = { version = "0.8.2", optional = true, default-features = false }
 ecb = { version = "0.1.2", optional = true, default-features = false }
 ofb = { version = "0.6.1", optional = true, default-features = false }
 
-generic-array = "1.2.0"
+generic-array = "0.14.7"
