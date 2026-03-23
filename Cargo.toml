@@ -4,6 +4,7 @@ members = [
 	"cocoonfs-cli",
 	"crypto",
 	"bssl-bare-sys",
+	"ossl-bare-sys",
 	"bssl-bare-sys-target-integration",
 	"storage",
 	"tpm2-interface",
