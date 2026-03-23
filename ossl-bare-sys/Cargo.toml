@@ -1,5 +1,5 @@
 [package]
-name = "cocoon-tpm-ossl-bare-sys"
+name = "cocoon-tpm-bssl-bare-sys"
 version = "0.1.1"
 # Needs to have < 2024 for now, because boringssl's wrapper.h fed into
 # bindgen has function arguments named 'gen', which is a reserved

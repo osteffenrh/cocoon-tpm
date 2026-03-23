@@ -4,7 +4,7 @@
 
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use std::{env, os};
+use std::{env, fs, os};
 
 const LINK_NAME_SYM_PREFIX: &str = "ossl_a52a4823_";
 
@@ -14,6 +14,17 @@ struct BindgenPrefixLinkNames {}
 impl bindgen::callbacks::ParseCallbacks for BindgenPrefixLinkNames {
     fn generated_link_name_override(&self, item_info: bindgen::callbacks::ItemInfo<'_>) -> Option<String> {
         Some(String::from(LINK_NAME_SYM_PREFIX) + item_info.name)
+    }
+}
+
+fn generate_wrapper_h(include_dir: &PathBuf, out_header_file: &PathBuf) {
+    let p = fs::read_dir(include_dir).unwrap();
+    println!("---- {:?}", include_dir);
+    for f in p {
+        match f {
+            Ok(d) => println!("{:?} - {:?}", d.path(), d.file_type().ok()),
+            Err(e) => println!("{e}"),
+        }
     }
 }
 
@@ -60,21 +71,11 @@ fn main() {
         "no-atexit",
         "no-autoerrinit",
         "no-autoload-config",
-        "no-bf",
-        "no-blake2",
         "no-capieng",
         "no-cast",
-        "no-chacha",
-        "no-cmac",
-        "no-cmp",
-        "no-cms",
-        "no-ct",
         "no-deprecated",
-        "no-des",
         "no-dgram",
-        "no-dh",
         "no-docs",
-        "no-dsa",
         "no-dso",
         "no-dtls",
         "no-dtls1",
@@ -82,13 +83,7 @@ fn main() {
         "no-dtls1_2",
         "no-dtls1_2-method",
         "no-dynamic-engine",
-        "no-ec2m",
-        "no-ecdh",
-        "no-ecdsa",
-        "no-ecx",
-        "no-egd",
         "no-engine",
-        "no-err",
         "no-filenames",
         "no-gost",
         "no-http",
@@ -97,13 +92,9 @@ fn main() {
         "no-makedepend",
         "no-md4",
         "no-mdc2",
-        "no-ml-dsa",
-        "no-ml-kem",
         "no-module",
         "no-multiblock",
         "no-nextprotoneg",
-        "no-ocb",
-        "no-ocsp",
         "no-padlockeng",
         "no-pic",
         "no-poly1305",
@@ -112,9 +103,6 @@ fn main() {
         "no-quic",
         "no-rc2",
         "no-rc4",
-        "no-rfc3779",
-        "no-rmd160",
-        "no-scrypt",
         "no-seed",
         "no-shared",
         "no-siphash",
@@ -158,6 +146,12 @@ fn main() {
         .status()
         .unwrap();
     assert!(make.success());
+
+    generate_wrapper_h(
+        &ossl_build_path.join("include").join("openssl"),
+        &ossl_build_path.join("wrap.h"),
+    );
+    assert!(false);
 
     let status = Command::new("objcopy")
         .arg(format!("--prefix-symbols={LINK_NAME_SYM_PREFIX}"))
@@ -252,13 +246,12 @@ fn main() {
 
     // Generate the binding.
     // Essentially translated verbatim from boringssl/rust/bssl-sys/CMakeLists.txt.
-    let ossl_src_path = PathBuf::from(ossl_src_dir);
     let ossl_src_rust_bssl_sys_bindgen_hdr = PathBuf::from("third-party")
         .join("wrapper.h")
         .into_os_string()
         .into_string()
         .unwrap();
-    let ossl_src_include_path = ossl_src_path.join("include");
+    let ossl_src_include_path = ossl_build_path.join("include");
     let ossl_src_include_dir = ossl_src_include_path.clone().into_os_string().into_string().unwrap();
     let bindgen_wrapper_rs_out_path = out_path.join("wrapper.rs");
     // wrap_static_fns(true) is not possible unfortunately, as it would ignore
