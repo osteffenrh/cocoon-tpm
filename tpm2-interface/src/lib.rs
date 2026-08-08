@@ -5,6 +5,7 @@
 #![no_std]
 #![macro_use]
 
+#[rustfmt::skip]
 mod interface;
 pub use interface::*;
 
