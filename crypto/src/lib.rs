@@ -4,6 +4,9 @@
 
 #![no_std]
 
+#[cfg(all(feature = "boringssl", feature = "openssl"))]
+compile_error!("Features \"boringssl\" and \"openssl\" are mutually exclusive");
+
 use cocoon_tpm_tpm2_interface as tpm2_interface;
 use cocoon_tpm_utils_common as utils_common;
 

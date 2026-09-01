@@ -28,6 +28,8 @@ pub use crate::backend::rng::*;
 // The HashDrbg is special. Striclty speaking it belongs into the pure_rust
 // backend mod, but is used by a number of Known Answer Tests. So import from
 // here.
+#[cfg(all(feature = "boringssl", feature = "openssl"))]
+compile_error!("Features \"boringssl\" and \"openssl\" are mutually exclusive");
 #[cfg(any(not(any(feature = "boringssl", feature = "openssl")), test))]
 mod hash_drbg;
 #[cfg(any(not(any(feature = "boringssl", feature = "openssl")), test))]
