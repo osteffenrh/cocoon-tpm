@@ -364,11 +364,13 @@ impl HmacInstance {
         let ctx = ptr::NonNull::new(ctx).ok_or_else(ossl_ffi::error::ossl_get_error)?;
 
         let key_len = key.len();
-        let key = if !key.is_empty() { key.as_ptr() } else { ptr::null() };
+        // OpenSSL treats key=NULL as "reuse previous key", which fails on a fresh
+        // context. Always pass a valid pointer, even for zero-length keys.
+        let key_ptr = if !key.is_empty() { key.as_ptr() } else { [0u8; 1].as_ptr() };
         if unsafe {
             ossl_bare_sys::HMAC_Init_ex(
                 ctx.as_ptr(),
-                key as *const ffi::c_void,
+                key_ptr as *const ffi::c_void,
                 key_len as ffi::c_int,
                 md,
                 ptr::null_mut(),
