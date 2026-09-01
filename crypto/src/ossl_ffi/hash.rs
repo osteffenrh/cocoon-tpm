@@ -506,6 +506,13 @@ impl HmacInstance {
     }
 }
 
+impl Drop for HmacInstance {
+    fn drop(&mut self) {
+        unsafe { ossl_bare_sys::ossl_shim_HMAC_CTX_cleanup(self.ctx.as_ptr()) };
+        unsafe { ossl_bare_sys::HMAC_CTX_free(self.ctx.as_ptr()) };
+    }
+}
+
 // Safety: never mutated through an immutable reference and the pointer doesn't
 // alias.
 unsafe impl marker::Send for HmacInstance {}
