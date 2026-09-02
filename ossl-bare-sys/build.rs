@@ -433,12 +433,17 @@ fn main() {
         bindgen_wrapper_rs_out_path.into_os_string().into_string().unwrap()
     );
 
+    // Rename the archive to avoid conflicts with other crates that also link
+    // libcrypto.a (e.g. libtcgtpm in SVSM). The symbols inside are already
+    // prefixed, so only the archive name collides.
+    let renamed_libcrypto = ossl_build_path.join("libossl_bare_crypto.a");
+    std::fs::rename(&ossl_libcrypto, &renamed_libcrypto).unwrap();
+
     println!(
         "cargo::rustc-link-search={}",
         ossl_build_path.as_os_str().to_os_string().into_string().unwrap()
     );
-    // Add the generated objects to the link.
-    println!("cargo::rustc-link-lib=crypto");
+    println!("cargo::rustc-link-lib=ossl_bare_crypto");
 
     // Forward any additional link paths/libs from the integration crate.
     if let Some(link_search) = integration_link_search.as_ref() {
