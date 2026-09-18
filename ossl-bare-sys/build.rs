@@ -13,11 +13,20 @@ fn prefix_symbols() -> bool {
 }
 
 #[derive(Debug)]
-struct BindgenPrefixLinkNames {}
+struct BindgenCallbacks {
+    prefix_symbols: bool,
+}
 
-impl bindgen::callbacks::ParseCallbacks for BindgenPrefixLinkNames {
-    fn generated_link_name_override(&self, item_info: bindgen::callbacks::ItemInfo<'_>) -> Option<String> {
-        Some(String::from(LINK_NAME_SYM_PREFIX) + item_info.name)
+impl bindgen::callbacks::ParseCallbacks for BindgenCallbacks {
+    fn generated_link_name_override(
+        &self,
+        item_info: bindgen::callbacks::ItemInfo<'_>,
+    ) -> Option<String> {
+        if self.prefix_symbols {
+            Some(String::from(LINK_NAME_SYM_PREFIX) + item_info.name)
+        } else {
+            None
+        }
     }
 }
 
@@ -28,6 +37,10 @@ fn main() {
     let ossl_build_path = out_path.join("build");
 
     // Read integration metadata from the target-integration crate.
+    // These env vars are set by the cocoon-tpm-ossl-bare-sys-target-integration
+    // crate's build.rs via cargo::metadata. They are all optional — the default
+    // (no-op) integration crate emits none of them, which gives a vanilla
+    // host-native OpenSSL build.
     let integration_cppflags = env::var("DEP_OSSL_BARE_SYS_TARGET_INTEGRATION_CPPFLAGS").ok();
     let integration_cflags = env::var("DEP_OSSL_BARE_SYS_TARGET_INTEGRATION_CFLAGS").ok();
     let integration_bindgen_cflags = env::var("DEP_OSSL_BARE_SYS_TARGET_INTEGRATION_BINDGEN_CFLAGS").ok();
@@ -36,6 +49,24 @@ fn main() {
     let integration_configure_target = env::var("DEP_OSSL_BARE_SYS_TARGET_INTEGRATION_CONFIGURE_TARGET").ok();
     let integration_link_search = env::var("DEP_OSSL_BARE_SYS_TARGET_INTEGRATION_LINK_SEARCH").ok();
     let integration_link_lib = env::var("DEP_OSSL_BARE_SYS_TARGET_INTEGRATION_LINK_LIB").ok();
+
+    // Sanity-check: if a custom target is specified, the config file must also
+    // be present, and vice-versa. A half-configured build will silently produce
+    // wrong results (e.g. auto-detecting the host platform instead of using the
+    // intended target).
+    if integration_configure_target.is_some() != integration_configure_config_file.is_some() {
+        panic!(
+            "Inconsistent integration metadata: CONFIGURE_TARGET={:?} but \
+             CONFIGURE_CONFIG_FILE={:?}. Both must be set together.",
+            integration_configure_target, integration_configure_config_file
+        );
+    }
+
+    // Log received metadata so build failures are diagnosable.
+    eprintln!("ossl-bare-sys: integration target={:?}, config_file={:?}, \
+               args={:?}, cppflags={:?}, cflags={:?}",
+              integration_configure_target, integration_configure_config_file,
+              integration_configure_args, integration_cppflags, integration_cflags);
 
     // Remove the libcrypto.a from a previous run, if any -- the symbol renaming
     // further below is not idempotent.
@@ -179,6 +210,43 @@ fn main() {
         .status()
         .unwrap();
     assert!(status.success());
+
+    // Sanity-check that EC was not accidentally disabled by Configure.
+    // OpenSSL's Configure auto-adds "no-<alg>" for any algorithm whose
+    // crypto/<alg>/ directory is missing from $srcdir (Configure lines ~329-334).
+    // This catches submodule-init issues and wrong $srcdir resolution.
+    let ec_dir = ossl_src_dir.join("crypto").join("ec");
+    if !ec_dir.is_dir() {
+        panic!(
+            "OpenSSL source directory {ec_dir:?} does not exist. \
+             The openssl git submodule may not be initialized. \
+             Run: git submodule update --init --recursive"
+        );
+    }
+    let config_h = ossl_build_path.join("include").join("openssl").join("configuration.h");
+    let config_contents = std::fs::read_to_string(&config_h)
+        .unwrap_or_else(|e| panic!("cannot read {}: {e}", config_h.display()));
+    let ec_disabled = config_contents.lines().any(|line| {
+        let trimmed = line.trim().trim_start_matches('#').trim();
+        trimmed == "define OPENSSL_NO_EC"
+    });
+    if ec_disabled {
+        let disabled: Vec<&str> = config_contents
+            .lines()
+            .filter(|l| l.contains("OPENSSL_NO_"))
+            .collect();
+        panic!(
+            "OpenSSL Configure unexpectedly disabled EC.\n\
+             Source dir: {}\n\
+             Build dir: {}\n\
+             crypto/ec exists: {}\n\
+             All OPENSSL_NO_* in configuration.h:\n{}",
+            ossl_src_dir.display(),
+            ossl_build_path.display(),
+            ec_dir.is_dir(),
+            disabled.join("\n")
+        );
+    }
 
     // Build the shim library.
     // Generated headers (from .h.in templates: crypto.h, bio.h, …) live in
@@ -398,17 +466,16 @@ fn main() {
     }
 
     // Generate the binding.
-    let ossl_src_rust_bindgen_hdr = src_dir
-        .join("third-party")
-        .join("wrapper.h")
-        .into_os_string()
-        .into_string()
-        .unwrap();
-    let ossl_include_dir_str = ossl_include_dir.into_os_string().into_string().unwrap();
+    // Canonicalize paths so that bindgen's allowlist_file regexes match
+    // even when libclang resolves symlinks or bind-mount targets.
+    let canon = |p: PathBuf| -> String {
+        p.canonicalize().unwrap_or(p).into_os_string().into_string().unwrap()
+    };
+    let ossl_src_rust_bindgen_hdr = canon(src_dir.join("third-party").join("wrapper.h"));
+    let ossl_include_dir_str = canon(ossl_include_dir);
     // OpenSSL headers live in both the source tree and the build output.
-    let ossl_src_include_dir = src_dir.join("third-party").join("openssl").join("include");
-    let ossl_src_include_dir_str = ossl_src_include_dir.into_os_string().into_string().unwrap();
-    let shim_include_dir = src_dir.join("third-party").into_os_string().into_string().unwrap();
+    let ossl_src_include_dir_str = canon(src_dir.join("third-party").join("openssl").join("include"));
+    let shim_include_dir = canon(src_dir.join("third-party"));
     let bindgen_wrapper_rs_out_path = out_path.join("wrapper.rs");
     let mut bindings = bindgen::Builder::default()
         .header(&ossl_src_rust_bindgen_hdr)
@@ -423,17 +490,64 @@ fn main() {
         .clang_arg(format!("-I{ossl_include_dir_str}"))
         .clang_arg(format!("-I{ossl_src_include_dir_str}"))
         .clang_arg(format!("-I{shim_include_dir}"));
-    if prefix_symbols() {
-        bindings = bindings.parse_callbacks(Box::new(BindgenPrefixLinkNames {}));
-    }
+    bindings = bindings.parse_callbacks(Box::new(BindgenCallbacks {
+        prefix_symbols: prefix_symbols(),
+    }));
     if let Some(bindgen_cflags) = integration_bindgen_cflags.as_ref() {
-        bindings = bindings.clang_args(bindgen_cflags.split_ascii_whitespace());
+        // The integration crate supplies include paths for the target's C
+        // library (e.g. a bare-metal libcrt).  Three adjustments ensure
+        // bindgen uses only target headers and clang built-ins, regardless
+        // of host distro or compiler defaults:
+        //
+        // 1. -nostdlibinc: suppress host system headers so bindgen never
+        //    picks up host-side libc.  Required for cross-builds where the
+        //    host and target may have different type widths.  Clang's own
+        //    built-in headers (stddef.h, stdarg.h — compiler intrinsics,
+        //    not libc) are kept.
+        //
+        // 2. -I → -idirafter: the target C library headers are searched
+        //    AFTER clang's built-in headers.  Without this, a target-
+        //    provided stddef.h shadows clang's own, corrupting the type
+        //    system and causing bindgen to emit zero function bindings.
+        //
+        // 3. -fno-PIE: normalise __pie__ across host compilers.  Some
+        //    target C libraries guard `#pragma GCC visibility push(hidden)`
+        //    on __pie__.  On hosts where clang defaults to PIE (Ubuntu,
+        //    Debian), __pie__ is defined, the pragma fires, and all
+        //    subsequent function declarations get hidden visibility —
+        //    bindgen's enable_function_attribute_detection() then silently
+        //    drops them.  Hosts without PIE defaults (Fedora, RHEL) are
+        //    unaffected, hiding the bug.  Since bindgen only parses headers
+        //    and never generates code, PIE has no effect on the output
+        //    beyond the __pie__ macro; -fno-PIE is kept unconditionally to
+        //    avoid distro-dependent build failures.
+        bindings = bindings
+            .clang_arg("-nostdlibinc")
+            .clang_arg("-fno-PIE");
+        let flags = bindgen_cflags.split_ascii_whitespace().map(|f| {
+            f.strip_prefix("-I")
+                .map(|path| format!("-idirafter{path}"))
+                .unwrap_or_else(|| f.to_string())
+        });
+        bindings = bindings.clang_args(flags);
     }
     bindings
         .generate()
         .expect("Failed to generate ossl bindings")
         .write_to_file(bindgen_wrapper_rs_out_path.clone())
         .expect("Failed to write ossl bindings");
+
+    // Verify that critical bindings were generated.
+    let wrapper_contents = std::fs::read_to_string(&bindgen_wrapper_rs_out_path)
+        .expect("Failed to read generated bindings");
+    assert!(
+        wrapper_contents.contains("EC_POINT_new"),
+        "Generated bindings are missing EC_POINT_new — bindgen \
+         produced {} 'pub fn' entries. Check that the OpenSSL source \
+         tree includes crypto/ec/ and that BINDGEN_CFLAGS does not \
+         shadow clang's built-in headers.",
+        wrapper_contents.matches("pub fn ").count()
+    );
 
     // Included from lib.rs by means of this environment variable.
     println!(
