@@ -128,12 +128,12 @@ impl BsslAesKey {
 }
 
 /// [`BsslAesKey`] instantiated for encryption.
-struct BsslAesEncKey {
+pub(super) struct BsslAesEncKey {
     aes_key: Box<BsslAesKey>,
 }
 
 impl BsslAesEncKey {
-    fn new(key: &[u8], key_size: symcipher::SymBlockCipherAesKeySize) -> Result<Self, CryptoError> {
+    pub(super) fn new(key: &[u8], key_size: symcipher::SymBlockCipherAesKeySize) -> Result<Self, CryptoError> {
         Ok(Self {
             aes_key: BsslAesKey::new(key, key_size, true)?,
         })
@@ -145,7 +145,7 @@ impl BsslAesEncKey {
         })
     }
 
-    fn as_ptr(&self) -> *const bssl_bare_sys::AES_KEY {
+    pub(super) fn as_ptr(&self) -> *const bssl_bare_sys::AES_KEY {
         &*self.aes_key.key as *const bssl_bare_sys::AES_KEY
     }
 
@@ -156,13 +156,13 @@ impl BsslAesEncKey {
 
 /// [`BsslAesKey`] instantiated for decryption.
 #[allow(unused)]
-struct BsslAesDecKey {
+pub(super) struct BsslAesDecKey {
     aes_key: Box<BsslAesKey>,
 }
 
 #[allow(unused)]
 impl BsslAesDecKey {
-    fn new(key: &[u8], key_size: symcipher::SymBlockCipherAesKeySize) -> Result<Self, CryptoError> {
+    pub(super) fn new(key: &[u8], key_size: symcipher::SymBlockCipherAesKeySize) -> Result<Self, CryptoError> {
         Ok(Self {
             aes_key: BsslAesKey::new(key, key_size, false)?,
         })
@@ -174,7 +174,7 @@ impl BsslAesDecKey {
         })
     }
 
-    fn as_ptr(&self) -> *const bssl_bare_sys::AES_KEY {
+    pub(super) fn as_ptr(&self) -> *const bssl_bare_sys::AES_KEY {
         &*self.aes_key.key as *const bssl_bare_sys::AES_KEY
     }
 

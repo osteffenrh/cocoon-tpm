@@ -16,6 +16,8 @@ mod error;
 pub mod hash;
 mod io_slices;
 pub mod kdf;
+#[cfg(feature = "aes_kw")]
+pub mod keywrap;
 pub mod rng;
 #[cfg(feature = "rsa")]
 pub mod rsa;

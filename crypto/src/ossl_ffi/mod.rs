@@ -6,6 +6,8 @@
 pub(super) mod ecc;
 mod error;
 pub(super) mod hash;
+#[cfg(feature = "aes_kw")]
+pub(super) mod keywrap;
 mod ossl_bn;
 pub(super) mod rng;
 pub(super) mod symcipher;

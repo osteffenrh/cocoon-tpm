@@ -7,5 +7,7 @@ mod bssl_bn;
 pub(super) mod ecc;
 mod error;
 pub(super) mod hash;
+#[cfg(feature = "aes_kw")]
+pub(super) mod keywrap;
 pub(super) mod rng;
 pub(super) mod symcipher;
