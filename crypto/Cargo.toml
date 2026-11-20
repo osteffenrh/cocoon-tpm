@@ -34,7 +34,7 @@ enable_x86_64_rdseed = []
 zeroize = [
     "dep:zeroize", "cocoon-tpm-utils-common/zeroize", "cmpa/zeroize",
     "aes?/zeroize", "camellia?/zeroize", "sm4?/zeroize",
-    "cfb-mode?/zeroize", "cbc?/zeroize", "ofb?/zeroize", "aes-kw?/zeroize"
+    "cfb-mode?/zeroize", "cbc?/zeroize", "ofb?/zeroize", "aes-gcm?/zeroize", "aes-kw?/zeroize"
 ]
 
 # Replace crypto implementations written in pure Rust with
@@ -66,6 +66,9 @@ cfb = ["dep:cfb-mode", "cocoon-tpm-tpm2-interface/cfb"]
 ctr = ["cocoon-tpm-tpm2-interface/ctr"]
 ecb = ["dep:ecb", "cocoon-tpm-tpm2-interface/ecb"]
 ofb = ["dep:ofb", "cocoon-tpm-tpm2-interface/ofb"]
+
+# AEAD
+aes_gcm = ["dep:aes-gcm"]
 
 # Key wrap
 aes_kw = ["dep:aes-kw"]
@@ -128,6 +131,7 @@ cbc = { version = "0.1.2", optional = true, default-features = false }
 cfb-mode = { version = "0.8.2", optional = true, default-features = false }
 ecb = { version = "0.1.2", optional = true, default-features = false }
 ofb = { version = "0.6.1", optional = true, default-features = false }
+aes-gcm = { version = "0.10.3", optional = true, default-features = false, features = ["aes"] }
 aes-kw = { version = "0.3.1", optional = true, default-features = false }
 
 generic-array = "1.2.0"

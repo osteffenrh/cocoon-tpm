@@ -2,6 +2,8 @@
 // Copyright 2025 SUSE LLC
 // Author: Nicolai Stange <nstange@suse.de>
 
+#[cfg(feature = "aes_gcm")]
+pub(super) mod aead;
 #[cfg(feature = "ecc")]
 pub(super) mod ecc;
 pub(super) mod hash;

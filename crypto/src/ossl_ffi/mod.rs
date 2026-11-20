@@ -2,6 +2,8 @@
 // Copyright 2026 Red Hat
 // Author: Oliver Steffen <osteffen@redhat.com>
 
+#[cfg(feature = "aes_gcm")]
+pub(super) mod aead;
 #[cfg(feature = "ecc")]
 pub(super) mod ecc;
 mod error;
